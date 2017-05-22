@@ -1,7 +1,10 @@
 Command line parameters:
-filename=X precision=X [test={true|false}] [dumping_factor=X]
-
-Default values for test and for dumping_factor are false and .85, respectivly
+filename=X					// file with the data
+precision=X					// sensitivity of the algorithm
+[output_filename=X]			// file with output weights; isn't created, if not specified
+[test={true|false}]			// whether data is in test format; default false
+[dumping_factor=X]			// dumping factor for the algorithm; default 0.85
+[power_iteration={true|false}]	// use base Power Iteration algorithm for obtaining a baseline; default false
 
 Test file format:
 Number_of_sites

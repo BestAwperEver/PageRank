@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 #include <regex>
+#include <ctime>
 using namespace std;
 
 typedef vector<vector<int>> links;
@@ -25,9 +26,13 @@ inline double dot_product(vector<double>& X, const vector<int>& IncomingLinks, c
 	return res;
 }
 
-vector<double> power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps) {
+vector<double> not_power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps, int N) {
 	vector<double> X(LinksCount.size());
+	//for (int i = 0; i < X.size(); ++i) {
+	//	X[i] = IncomingLinks[i].size() / max(LinksCount[i], 1);
+	//}
 	bool coveraged = false;
+	int coveraged_count = 0;
 	vector<bool> cov_vector(X.size(), false);
 	int iteration = 0;
 	while (!coveraged) {
@@ -35,9 +40,12 @@ vector<double> power_iteration(const links& IncomingLinks, const vector<int>& Li
 		cout << "Iteration " << iteration << ':' << endl;
 		for (int i = 0; i < X.size(); ++i) {
 			if (cov_vector[i] == false) {
-				double new_Xi = 1 - d + d * dot_product(X, IncomingLinks[i], LinksCount);
-				if (abs(new_Xi - X[i]) > eps) coveraged = false;
-				else cov_vector[i] = true;
+				double new_Xi = (1 - d)/N + d * dot_product(X, IncomingLinks[i], LinksCount);
+				if (abs(new_Xi - X[i]) <= eps) {
+					cov_vector[i] = true;
+				} else {
+					coveraged = false;
+				}
 				X[i] = new_Xi;
 			}
 			if (i % 100000 == 0) cout << i << endl;
@@ -48,8 +56,31 @@ vector<double> power_iteration(const links& IncomingLinks, const vector<int>& Li
 	return X;
 }
 
-bool cmd_processing(int argc, char *argv[], bool& test, string& filename, double& epsilon, double& dump_factor) {
-	if (argc < 3 || argc > 5) return false;
+vector<double> power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps, int N) {
+	vector<double> X(LinksCount.size()), new_X(LinksCount.size());
+	bool coveraged = false;
+	int iteration = 0;
+	while (!coveraged) {
+		coveraged = true;
+		cout << "Iteration " << iteration << ':' << endl;
+		for (int i = 0; i < X.size(); ++i) {
+			new_X[i] = (1 - d)/N + d * dot_product(X, IncomingLinks[i], LinksCount);
+			if (abs(new_X[i] - X[i]) > eps) coveraged = false;
+			if (i % 100000 == 0) cout << i << endl;
+		}
+		X = new_X;
+		cout << endl;
+		++iteration;
+	}
+	return X;
+}
+
+bool cmd_processing(int argc, char *argv[],
+	bool& test, bool& power_iter,
+	string& filename, string& output_filename,
+	double& epsilon, double& dump_factor)
+{
+	if (argc < 3 || argc > 7) return false;
 
 	string arg;
 
@@ -69,6 +100,14 @@ bool cmd_processing(int argc, char *argv[], bool& test, string& filename, double
 			} else return false;
 		} else if (arg.substr(0, ind) == "dumping_factor") {
 			dump_factor = atof(arg.substr(ind + 1).c_str());
+		} else if (arg.substr(0, ind) == "output_file") {
+			output_filename = arg.substr(ind + 1);
+		} else if (arg.substr(0, ind) == "power_iteration") {
+			if (strcmp(argv[i] + 1 + strlen("power_iteration"), "false") == 0) {
+				power_iter = false;
+			} else if (strcmp(argv[i] + 1 + strlen("power_iteration"), "true") == 0) {
+				power_iter = true;
+			} else return false;
 		}
 	}
 
@@ -77,13 +116,14 @@ bool cmd_processing(int argc, char *argv[], bool& test, string& filename, double
 
 int main(int argc, char *argv[]) {
 
-	bool test = false;
-	string filename;
+	bool test = false, power_iter = false;
+	string filename, output_filename("-");
 	double epsilon = 1, dump_factor = .85;
 
-	if (cmd_processing(argc, argv, test, filename, epsilon, dump_factor) == false) {
+	if (cmd_processing(argc, argv, test, power_iter, filename, output_filename, epsilon, dump_factor) == false) {
 		cout << "Command line parameters:\n"
-			"filename=X precision=X [test={true|false}] [dumping_factor=X]\n"
+			"filename=X precision=X"
+			"[output_filename=X] [test={true|false}] [dumping_factor=X] [power_iteration={true|false}]\n"
 			"Check readme.txt for further information" << endl;
 		system("pause");
 		return 0;
@@ -99,6 +139,8 @@ int main(int argc, char *argv[]) {
 
 	int N;
 	int min, max;
+
+	cout << "Preprocessing..." << endl;
 
 	if (test == false) {
 
@@ -126,6 +168,8 @@ int main(int argc, char *argv[]) {
 	vector<string> DictIntString(N);
 	map<string, int> DictStringInt;
 	int k = 0;
+
+	cout << "Index building..." << endl;
 
 	if (test == false) {
 		while (f.peek() + 1) {
@@ -166,17 +210,34 @@ int main(int argc, char *argv[]) {
 
 	f.close();
 
-	auto X = power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon);
+	cout << "Processing..." << endl;
 
-	if (test == false) {
-		ofstream o("out.txt");
-		for (int i = 0; i < X.size(); ++i) {
-			o << i << '\t' << X[i] << endl;
-		}
-		o.close();
-	} else {
-		for (int i = 0; i < X.size(); ++i) {
-			cout << DictIntString[i] << ": " << X[i] << endl;
+	vector<double> X;
+	
+	auto start = clock();
+
+	if (power_iter) 
+		X = power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon, N);
+	else
+		X = not_power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon, N);
+
+	auto ticks = clock() - start;
+
+	cout << "Time taken: " << ticks/CLOCKS_PER_SEC << " seconds" << endl;
+
+	if (output_filename != "-") {
+		cout << "Writing output in " << output_filename << endl;
+
+		if (test == false) {
+			ofstream o("out.txt");
+			for (int i = 0; i < X.size(); ++i) {
+				o << i << '\t' << X[i] << endl;
+			}
+			o.close();
+		} else {
+			for (int i = 0; i < X.size(); ++i) {
+				cout << DictIntString[i] << ": " << X[i] << endl;
+			}
 		}
 	}
 
