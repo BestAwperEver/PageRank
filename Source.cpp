@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
 	if (cmd_processing(argc, argv, test, filename, epsilon, dump_factor) == false) {
 		cout << "Command line parameters:\n"
-			"filename=X precision=X [test={true|false}] [dumping_factor=X]"
+			"filename=X precision=X [test={true|false}] [dumping_factor=X]\n"
 			"Check readme.txt for further information" << endl;
 		system("pause");
 		return 0;
