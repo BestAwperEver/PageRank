@@ -1,5 +1,5 @@
 Command line parameters:
-filename=X precision=X [test=[true|false]] [dumping_factor=X]
+filename=X precision=X [test={true|false}] [dumping_factor=X]
 
 Default values for test and for dumping_factor are false and .85, respectivly
 
