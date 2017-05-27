@@ -26,11 +26,12 @@ inline double dot_product(vector<double>& X, const vector<int>& IncomingLinks, c
 	return res;
 }
 
-vector<double> not_power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps, int N) {
+vector<double> not_power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps) {
 	vector<double> X(LinksCount.size());
 	//for (int i = 0; i < X.size(); ++i) {
 	//	X[i] = IncomingLinks[i].size() / max(LinksCount[i], 1);
 	//}
+	int N = LinksCount.size();
 	bool coveraged = false;
 	int coveraged_count = 0;
 	vector<bool> cov_vector(X.size(), false);
@@ -56,10 +57,11 @@ vector<double> not_power_iteration(const links& IncomingLinks, const vector<int>
 	return X;
 }
 
-vector<double> power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps, int N) {
+vector<double> power_iteration(const links& IncomingLinks, const vector<int>& LinksCount, double d, double eps) {
 	vector<double> X(LinksCount.size()), new_X(LinksCount.size());
 	bool coveraged = false;
 	int iteration = 0;
+	int N = LinksCount.size();
 	while (!coveraged) {
 		coveraged = true;
 		cout << "Iteration " << iteration << ':' << endl;
@@ -100,7 +102,7 @@ bool cmd_processing(int argc, char *argv[],
 			} else return false;
 		} else if (arg.substr(0, ind) == "dumping_factor") {
 			dump_factor = atof(arg.substr(ind + 1).c_str());
-		} else if (arg.substr(0, ind) == "output_file") {
+		} else if (arg.substr(0, ind) == "output_filename") {
 			output_filename = arg.substr(ind + 1);
 		} else if (arg.substr(0, ind) == "power_iteration") {
 			if (strcmp(argv[i] + 1 + strlen("power_iteration"), "false") == 0) {
@@ -217,9 +219,9 @@ int main(int argc, char *argv[]) {
 	auto start = clock();
 
 	if (power_iter) 
-		X = power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon, N);
+		X = power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon);
 	else
-		X = not_power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon, N);
+		X = not_power_iteration(IncomingLinks, LinksCount, dump_factor, epsilon);
 
 	auto ticks = clock() - start;
 
